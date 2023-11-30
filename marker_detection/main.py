@@ -11,6 +11,7 @@ param_markers = aruco.DetectorParameters()
 # utilizes default camera/webcam driver
 cap = cv2.VideoCapture(0)
 
+
 # iterate through multiple frames, in a live video feed
 while True:
     ret, frame = cap.read()
