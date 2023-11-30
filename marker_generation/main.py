@@ -19,3 +19,4 @@ for id in range(20):  # genereting 20 markers
     
     #cv2.waitKey(0)
     #break
+    #meee
