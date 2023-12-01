@@ -18,6 +18,3 @@ for id in range(20):  # genereting 20 markers
     cv2.imwrite(f"markers/marker_{id}.png", marker_image)
     
     #cv2.waitKey(0)
-    #break
-    #meee
-    #moussa
