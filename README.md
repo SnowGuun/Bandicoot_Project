@@ -3,4 +3,4 @@ A camera assistance system that guide the user to specific position in real life
 
 To check the distance:
 
-Run the code from main.py (nothing will happen if you run it from distance.py)
+Run the code from main.py (nothing will happen if you run it from distance.py)\n
