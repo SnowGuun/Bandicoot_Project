@@ -60,7 +60,7 @@ while True:
         break
     if key == ord("s") and board_detected == True:
         # the checker board image gets stored
-        cv.imwrite(f"{image_path}/left{n}.png", copyFrame)
+        cv.imwrite(f"{image_path}/image{n}.png", copyFrame)
 
         print(f"saved image number {n}")
         n += 1  # the image counter: incrementing
