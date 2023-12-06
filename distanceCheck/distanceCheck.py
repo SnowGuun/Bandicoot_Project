@@ -2,7 +2,6 @@ import cv2
 from cv2 import aruco
 import numpy as np
 import time
-import threading
 import math
 
 def distanceCheck():
