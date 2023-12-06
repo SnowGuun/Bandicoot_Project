@@ -66,7 +66,7 @@ def distanceCheck():
                 (10, 50),  # Position of the text
                 cv2.FONT_HERSHEY_PLAIN,
                 1.3,
-                (0, 255, 0),
+                (255, 0, 0),
                 2,
                 cv2.LINE_AA,
             )
