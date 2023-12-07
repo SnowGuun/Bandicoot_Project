@@ -64,7 +64,7 @@ def distanceCheck():
                 frame,
                 height_text,
                 (10, 50),  # Position of the text
-                cv2.FONT_HERSHEY_PLAIN,
+                cv2.FONT_HERSHEY_SIMPLEX,
                 1.3,
                 (255, 0, 0),
                 2,
