@@ -54,9 +54,9 @@ def distanceCheck():
         if 543 in markers_detected and 109 in markers_detected and current_time - last_update_time >= 2:
             combined_distance = (distances[543] + distances[109])/2
             height = math.sqrt(combined_distance ** 2 - m1 * m1)
-            height_text = f"You are at {round(height, 2)} cm high"
+            height_text = f"Current height:{round(height, 1)} cm"
             last_update_time = current_time
-        elif current_time - last_update_time >= 2:
+        elif current_time - last_update_time >= 1:
             height_text = ""
 
         if height_text:
