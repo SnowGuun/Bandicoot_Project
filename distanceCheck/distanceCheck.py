@@ -3,6 +3,13 @@ from cv2 import aruco
 import numpy as np
 import time
 import math
+def calculate_points(p, d1, r, delta, theta_values):
+    points = []
+    for theta in theta_values:
+        phi = math.asin(r / p)  # Calculate phi for each theta
+        dist = math.sqrt(p**2 + d1**2 - 2*p*d1*math.sin(phi)*math.cos(theta - delta))
+        points.append(dist)
+    return points
 
 def distanceCheck():
     # load in the calibration data
@@ -21,7 +28,7 @@ def distanceCheck():
     distances = {}
     last_update_time = 0
     height_text = ""
-    
+    distances_printed = False
 
     while True:
         ret, frame = cap.read()
@@ -58,7 +65,7 @@ def distanceCheck():
             last_update_time = current_time
         elif current_time - last_update_time >= 1:
             height_text = ""
-
+        
         if height_text:
             cv2.putText(
                 frame,
@@ -70,6 +77,19 @@ def distanceCheck():
                 2,
                 cv2.LINE_AA,
             )
+        if not distances_printed:
+            p = 95  # Example height, replace with actual height calculation
+            d1, r = 10, 20
+            delta = math.pi*7 / 6
+            theta_values = [0, math.pi/4, math.pi/2, 3*math.pi/4, math.pi, 5*math.pi/4, 3*math.pi/2, 7*math.pi/4]
+        
+            points = calculate_points(p, d1, r, delta, theta_values)
+        
+            for i, dist in enumerate(points, start=1):
+                print(f"Point {i} Distance: {dist:.2f} cm")
+                
+            distances_printed = True
+            
 
         cv2.imshow("frame", frame)
         key = cv2.waitKey(1)
@@ -78,6 +98,7 @@ def distanceCheck():
 
     cap.release()
     cv2.destroyAllWindows()
+    
 
 if __name__ == "__main__":
     distanceCheck()
