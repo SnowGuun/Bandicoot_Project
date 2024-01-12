@@ -1,7 +1,7 @@
 import math
 
 p = 95  # height from the middle point to the camera in centimeters
-d1 = 10  # distance from the middle point to the corner aruco marker
+d1 = 8 # distance from the middle point to the corner aruco marker
 r = 20   # horizontal distance from the middle point in centimeters
 phi = math.asin(r / p)  # calculating phi as arcsin(r/p)
 delta = math.pi*7 / 6  # delta value (30 degrees)
