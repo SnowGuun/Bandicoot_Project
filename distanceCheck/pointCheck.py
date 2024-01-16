@@ -17,7 +17,11 @@ class pointTracker():
         self.cap = cv2.VideoCapture(0)
         self.m1 = 10 
         self.p = 95 #testing height
-        self.r = 20 
+        self.r = 20
+
+        delta = math.pi * 7 / 6
+        theta_values = [0, math.pi/4, math.pi/2, 3*math.pi/4, math.pi, 5*math.pi/4, 3*math.pi/2, 7*math.pi/4]
+        self.points = self.calculate_points(self.p, self.m1, self.r, delta, theta_values)
 
     # Function to calculate points based on given parameters
     def calculate_points(self, p, d1, r, delta, theta_values):
@@ -27,14 +31,34 @@ class pointTracker():
             dist = math.sqrt(p**2 + d1**2 - 2*p*d1*math.sin(phi)*math.cos(theta - delta))
             points.append(dist)
         return points
+    
+    def detect_markers(self, gray_frame):
+        return aruco.detectMarkers(gray_frame, self.marker_dict, parameters=self.param_markers)
+
+    def draw_markers(self, frame, ids, corners):
+        for id, corner in zip(ids, corners):
+            if id[0] in [543, 109, 804]:
+                cv2.polylines(frame, [corner.astype(np.int32)], True, (0, 255, 255), 2, cv2.LINE_AA)
+
+    def print_point_distances(self):
+        for i, dist in enumerate(self.points, start=1):
+            print(f"Point {i} Distance: {dist:.2f} cm")
+
+    def guide_to_point(self, user_distance, target_point_distance, height_in_range):
+        tolerance = 0.5 
+        if height_in_range and abs(user_distance - target_point_distance) <= tolerance:
+            return "You are at Point 1"
+        return ""
 
     # Main function for distance checking and height calculation
-    def eightPoint(self):
+    def run(self):
 
         distances = {}
         last_update_time = 0
         updated_frquency = 1
         height_text = ""
+        height_in_range = False
+        user_at_point_msg = ""
         distances_printed = False
 
         while True:
@@ -42,65 +66,44 @@ class pointTracker():
             if not ret:
                 break
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            marker_corners, marker_IDs, reject = aruco.detectMarkers(
-                gray_frame, self.marker_dict, parameters=self.param_markers
-            
-            )
-            #Marker detection
+            marker_corners, marker_IDs, _ = self.detect_markers(gray_frame)  
             markers_detected = set()  # Set to store detected marker IDs
             
             if marker_corners:
-                rVec, tVec, _ = aruco.estimatePoseSingleMarkers(
-                    marker_corners, self.MARKER_SIZE, self.cam_mat, self.dist_coef
-                )
-
-                # Calculate distance for each detected marker
-                for ids, corners, i in zip(marker_IDs, marker_corners, range(marker_IDs.size)):
-                    distance = np.sqrt(
-                        tVec[i][0][2] ** 2 + tVec[i][0][0] ** 2 + tVec[i][0][1] ** 2
-                    )
-                    
-                    distances[ids[0]] = distance
-                    markers_detected.add(ids[0])
-                    if ids[0] in [543, 109]:
-                        # Draw a yellow square around markers 543 and 109
-                        cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 255), 2, cv2.LINE_AA)       
+                rVec, tVec, _ = aruco.estimatePoseSingleMarkers(marker_corners, self.MARKER_SIZE, self.cam_mat, self.dist_coef)
+                for id, corner, tvec in zip(marker_IDs, marker_corners, tVec):
+                    distances[id[0]] = np.linalg.norm(tvec[0])
+                    markers_detected.add(id[0])
+                self.draw_markers(frame, marker_IDs, marker_corners)       
             
             # Calculate and display height every 2 seconds
             current_time = time.time()
             if 543 in markers_detected and 109 in markers_detected and current_time - last_update_time > updated_frquency:
-                combined_distance = (distances[543] + distances[109])/2
-                height = math.sqrt(combined_distance ** 2 - self.m1 * 2)
+               
+                combined_distance = (distances[543] + distances[109]) / 2
+                height = math.sqrt(combined_distance ** 2 - self.m1 ** 2)
                 height_text = f"Current height:{round(height, 1)} cm"
                 last_update_time = current_time
-                if 92 <= combined_distance <= 97:
-                    print("You're in the correct range")
+                height_in_range = 92 <= combined_distance <= 97
+                if height_in_range:
                     height_text += " | In range"
                 else:
-                    print("Adjust your position")
                     height_text += " | Out of range"
-            #Show the text on screen
+            
+            if 804 in markers_detected:
+                user_distance_to_804 = distances.get(804,0)
+                target_point_distance = self.points[0]  # Disqtance to Point 1
+                user_at_point_msg = self.guide_to_point(user_distance_to_804, target_point_distance, height_in_range)
+
             if height_text:
-                cv2.putText(
-                    frame,
-                    height_text,
-                    (5, 30),  # Position of the text
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1.0,
-                    (0, 0, 255),
-                    2,
-                    cv2.LINE_AA,
-                )
+                cv2.putText(frame, height_text, (5, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+            if user_at_point_msg:
+                cv2.putText(frame, height_text, (5, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+            
 
             #print the distances to the 8 points surrounding the chart
             if not distances_printed:         
-                delta = math.pi*7 / 6
-                theta_values = [0, math.pi/4, math.pi/2, 3*math.pi/4, math.pi, 5*math.pi/4, 3*math.pi/2, 7*math.pi/4]
-            
-                points = self.calculate_points(self.p, self.m1, self.r, delta, theta_values)
-            
-                for i, dist in enumerate(points, start=1):
-                    print(f"Point {i} Distance: {dist:.2f} cm")
+                self.print_point_distances()
                     
                 distances_printed = True
                 
@@ -115,8 +118,7 @@ class pointTracker():
         self.cap.release()
         cv2.destroyAllWindows()
 
-    def run(self):
-        self.eightPoint()
+
     
 
 if __name__ == "__main__":
