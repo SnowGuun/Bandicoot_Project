@@ -33,6 +33,7 @@ class pointTracker():
 
         distances = {}
         last_update_time = 0
+        updated_frquency = 1
         height_text = ""
         distances_printed = False
 
@@ -67,14 +68,17 @@ class pointTracker():
             
             # Calculate and display height every 2 seconds
             current_time = time.time()
-            if 543 in markers_detected and 109 in markers_detected and current_time - last_update_time >= 2:
+            if 543 in markers_detected and 109 in markers_detected and current_time - last_update_time > updated_frquency:
                 combined_distance = (distances[543] + distances[109])/2
                 height = math.sqrt(combined_distance ** 2 - self.m1 * 2)
                 height_text = f"Current height:{round(height, 1)} cm"
                 last_update_time = current_time
-            elif current_time - last_update_time >= 2:
-                height_text = ""
-
+                if 92 <= combined_distance <= 97:
+                    print("You're in the correct range")
+                    height_text += " | In range"
+                else:
+                    print("Adjust your position")
+                    height_text += " | Out of range"
             #Show the text on screen
             if height_text:
                 cv2.putText(
