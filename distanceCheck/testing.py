@@ -47,16 +47,7 @@ class pointTracker():
     def print_point_distances(self):
         for i, dist in enumerate(self.points, start=1):
             print(f"Point {i} Distance: {dist:.2f} cm")
-
-    def guide_to_next_point(self, user_distance, height_in_range, key_press):
-        tolerance = 2  # Tolerance for being at a point
-        target_point_distance = self.points[self.current_point_index]
-
-        if abs(user_distance - target_point_distance) <= tolerance and height_in_range:
-            if key_press == ord('w'):
-                self.current_point_index = (self.current_point_index + 1) % len(self.points)
-            return f"You are at Point {self.current_point_index + 1}"
-        return ""            
+            
 
     # Main function for distance checking and height calculation
     def run(self):
@@ -68,7 +59,6 @@ class pointTracker():
         height_in_range = False
         user_at_point_msg = ""
         distances_printed = False
-        self.current_point_index = 0
 
         while True:
             ret, frame = self.cap.read()
@@ -81,15 +71,13 @@ class pointTracker():
             if marker_corners:
                 rVec, tVec, _ = aruco.estimatePoseSingleMarkers(marker_corners, self.MARKER_SIZE, self.cam_mat, self.dist_coef)
                 for id, corner, tvec in zip(marker_IDs, marker_corners, tVec):
-                    distance = np.linalg.norm(tvec[0])
-                    distances[id[0]] = distance
+                    distances[id[0]] = np.linalg.norm(tvec[0])
                     markers_detected.add(id[0])
-                    if id[0] == 120:
-                        print(f"Marker 120 Distance: {distance:.2f} cm")  # Print the distance of marker 120
                 self.draw_markers(frame, marker_IDs, marker_corners)       
             
             current_time = time.time()
-            if 543 in markers_detected and 109 in markers_detected and current_time - last_update_time > updated_frquency:              
+            if 543 in markers_detected and 109 in markers_detected and current_time - last_update_time > updated_frquency:
+               
                 combined_distance = (distances[543] + distances[109]) / 2
                 height = math.sqrt(combined_distance ** 2 - self.d ** 2)
                 height_text = f"Current height:{round(height, 1)} cm"
@@ -99,12 +87,15 @@ class pointTracker():
                     height_text += " | In range"
                 else:
                     height_text += " | Out of range"
-            
-            if 120 in markers_detected and height_in_range /2:
+            if 120 in markers_detected:
                 user_distance_to_120 = distances[120]
-                key = cv2.waitKey(1) & 0xFF
-                user_at_point_msg = self.guide_to_next_point(user_distance_to_120, height_in_range, key)
-
+                target_point_distance = self.points[0]  # Distance to Point 1
+                tolerance = 3  # Tolerance for being at a point, 
+                if abs(user_distance_to_120 - target_point_distance) <= tolerance and height_in_range:
+                    #print("Point 1 is here")
+                    user_at_point_msg = "You are at Point 1"
+                else:
+                    user_at_point_msg = ""
 
             if height_text:
                 cv2.putText(frame, height_text, (5, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
