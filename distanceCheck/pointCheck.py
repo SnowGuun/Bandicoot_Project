@@ -49,7 +49,7 @@ class pointTracker():
             print(f"Point {i} Distance: {dist:.2f} cm")
 
     def guide_to_next_point(self, user_distance, height_in_range, key_press):
-        tolerance = 2  # Tolerance for being at a point
+        tolerance = 0.7  # Tolerance for being at a point
         target_point_distance = self.points[self.current_point_index]
 
         if abs(user_distance - target_point_distance) <= tolerance and height_in_range:
@@ -94,7 +94,7 @@ class pointTracker():
                 height = math.sqrt(combined_distance ** 2 - self.d ** 2)
                 height_text = f"Current height:{round(height, 1)} cm"
                 last_update_time = current_time
-                height_in_range = 92 <= combined_distance <= 98
+                height_in_range = 93.5 <= combined_distance <= 96.5
                 if height_in_range:
                     height_text += " | In range"
                 else:
