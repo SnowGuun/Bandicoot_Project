@@ -15,6 +15,9 @@ class pointTracker():
         self.param_markers = aruco.DetectorParameters()
         self.MARKER_SIZE = 2  # centimeters
         self.cap = cv2.VideoCapture(0)
+        self.height_readings = []
+        self.reading_count = 5  # Number of readings to average
+        self.range_buffer = 1.5  # Hysteresis buffer in cm
 
         self.d = 9
         self.p = 95 #testing height
@@ -95,8 +98,9 @@ class pointTracker():
         user_at_point_msg = ""
         distances_printed = False
         self.current_point_index = 0
-        dots = ['top', 'down', 'left', 'right', 'top-left', 'top-right', 'down-left', 'down-right']
+        dots = ['top', 'top-right', 'right', 'down-right', 'down', 'down-left', 'left', 'top-left']
         current_dot = 0
+        
 
 
         while True:
@@ -115,44 +119,54 @@ class pointTracker():
                     markers_detected.add(id[0])
         
                 self.draw_markers(frame, marker_IDs, marker_corners)
-                marker_IDs = [id[0] for id in marker_IDs]
-                if 716 in marker_IDs and 592 in marker_IDs:
-                    marker716_index = marker_IDs.index(716)
-                    marker592_index = marker_IDs.index(592)
-                    marker716_center = np.mean(marker_corners[marker716_index][0], axis=0)
-                    marker592_center = np.mean(marker_corners[marker592_index][0], axis=0)
+                if marker_IDs is not None:
+                        marker_IDs_list = [id[0] for id in marker_IDs]
+                        if 543 in marker_IDs_list and 109 in marker_IDs_list:
+                            marker543_index = marker_IDs_list.index(543)
+                            marker109_index = marker_IDs_list.index(109)
+                            marker543_center = np.mean(marker_corners[marker543_index][0], axis=0)
+                            marker109_center = np.mean(marker_corners[marker109_index][0], axis=0)
 
-                    distance_716_592 = self.calculate_distance(marker716_center, marker592_center)
-                    middle_point = self.calculate_middle_point(marker716_center, marker592_center)
+                            distance_716_592 = self.calculate_distance(marker543_center, marker109_center)
+                            middle_point = self.calculate_middle_point(marker543_center, marker109_center)
 
-                    frame = cv2.circle(frame, tuple(middle_point.astype(int)), 5, (0, 0, 255), -1)
-                    current_direction = dots[current_dot]
-                    distance_from_middle = 200  # Specify the distance in centimeters
-                    dot_point = self.calculate_point_away_from_middle(middle_point, distance_from_middle, current_direction)
-                    frame = cv2.circle(frame, tuple(dot_point.astype(int)), 5, (255, 0, 0), -1)
+                            frame = cv2.circle(frame, tuple(middle_point.astype(int)), 5, (0, 0, 255), -1)
+                            current_direction = dots[current_dot]
+                            distance_from_middle = 200  # Specify the distance in centimeters
+                            dot_point = self.calculate_point_away_from_middle(middle_point, distance_from_middle, current_direction)
+                            frame = cv2.circle(frame, tuple(dot_point.astype(int)), 5, (255, 0, 0), -1)
 
-                    # Display the current dot direction
-                    frame = cv2.putText(frame, f"Dot Direction: {current_direction}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                            # Display the current dot direction
+                            frame = cv2.putText(frame, f"Dot Direction: {current_direction}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
                        
-            
             current_time = time.time()
             if 543 in markers_detected and 109 in markers_detected and current_time - last_update_time > updated_frquency:              
                 combined_distance = (distances[543] + distances[109]) / 2
-                height = math.sqrt(combined_distance ** 2 - self.d ** 2)
-                height_text = f"Current height:{round(height, 1)} cm"
-                last_update_time = current_time
-                height_in_range = 92 <= combined_distance <= 98
-                if height_in_range:
+                current_height = math.sqrt(combined_distance ** 2 - self.d ** 2)
+                self.height_readings.append(current_height)
+
+                if len(self.height_readings) > self.reading_count:
+                    self.height_readings.pop(0)
+
+                average_height = sum(self.height_readings) / len(self.height_readings)
+                height_text = f"Current height: {average_height:.1f} cm"
+                lower_bound = 93.5 - self.range_buffer
+                upper_bound = 96.5 + self.range_buffer
+                if lower_bound <= average_height <= upper_bound:
                     height_text += " | In range"
+                    
                 else:
                     height_text += " | Out of range"
+                    
             
             if 120 in markers_detected and height_in_range /2:
                 user_distance_to_120 = distances[120]
                 key = cv2.waitKey(1) & 0xFF
                 user_at_point_msg = self.guide_to_next_point(user_distance_to_120, height_in_range, key)
 
+            
+                
 
             if height_text:
                 cv2.putText(frame, height_text, (5, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
