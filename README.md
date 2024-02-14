@@ -35,7 +35,6 @@ NOTE: The size of the of checkerboard square need to match the aruco marker size
 
 ## Contact
 - Project Lead: Huynh Phuong Anh Nguyen - phnganhnguyn0323@gmail.com
-- Project Link: https://github.com/yourusername/FabricScan360
 
 ## Run the code
 Once you have everything set up you can run the code "pointTracker.py" via "pointTracker" folder
