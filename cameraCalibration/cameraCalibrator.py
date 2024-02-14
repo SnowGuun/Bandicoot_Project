@@ -12,7 +12,7 @@ SQUARE_SIZE = 22  # millimeters (change it according to printed size)
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 
-calib_data_path = "../calib_data"
+calib_data_path = "calib_data"
 CHECK_DIR = os.path.isdir(calib_data_path)
 
 
